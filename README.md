@@ -208,9 +208,152 @@ This map shows Santa going North to South. It is more efficient than ordering th
 
 # Path using Nearest Neighbours
 We want to find the nearest city location to the previous city visited starting from Rovaniemi in Finland which is Santa's home. For that, we will be defining our own function called `nearest_neighbour()`. 
-This function finds a path visiting all the cities in Santa's list using nearest neighbour. The principle behind nearest neighbour methods is to find the point closest in distance to the new point. In this application, it starts in one city and connects with the closest unvisited one, repeating the same distance calculation until every city has been visited. It then returns to the starting city. For more information on nearest neighbour please visit [this page](https://en.wikipedia.org/wiki/Nearest_neighbour_algorithm).
+This function finds a path visiting all the cities in Santa's list using nearest neighbour. The principle behind nearest neighbour method is to find the point closest in distance to the new point. In this application, it starts in one city and connects with the closest unvisited one, repeating the same distance calculation until every city has been visited. It then returns to the starting city. For more information on nearest neighbour please visit [this page](https://en.wikipedia.org/wiki/Nearest_neighbour_algorithm).
 
+`nearest_neighbour()` starts by storing multiple information such as a copy of the data called `cities`, it creates an array called `ids` where all the `city_ids` are stored and finally, it stores all the cities' coordinates in an array called `xy`. It then sets the path starting point as `path = [0]` since we started in Rovaniemi.
 
+The next part of the function is a while loop to execute the following statements if the length of the array `ids` is greater than zero, in other words, the loop runs as long as we have cities to visit. This ensures we visit all cities. In the loop, the first thing is to set the coordinates from the previous stop which are stored in the path and therefore equal to `path[-1]`. once we have those set and stored in `last_x, last_y` we can calculate the distances from the previous city to all the remaining cities to visit. The minimum distance is selected, and its index is stored in `nearest_index` and appended to the path. The selected nearest city is then deleted from `ids` and its coordinates from `xy`.
+
+Once all the cities from `ids` have been visited, the loop stops, and we append Rovaniemi as the last city.
+
+```python:
+def nearest_neighbour():
+  '''finds a path through the cities using a nearest neighbour.'''
+  cities = data.copy() 
+  ids = cities.city_id.values[1:] 
+  xy = np.array([cities.lat.values, cities.lng.values]).T[1:] 
+  path = [0] 
+  while len(ids) > 0: 
+    last_x, last_y = cities.lat[path[-1]], cities.lng[path[-1]] 
+    dist = ((xy - np.array([last_x, last_y]))**2).sum(-1) 
+    nearest_index = dist.argmin()
+    path.append(ids[nearest_index]) 
+    ids = np.delete(ids, nearest_index, axis=0) 
+    xy = np.delete(xy, nearest_index, axis=0)
+  path.append(0)
+  return path
+```
+
+We can now run the `distance()` function to see how the new path is performing:
+
+```python:
+nnpath = nearest_neighbour()
+print('Total distance with the Nearest Neighbour path is {} miles'.format(round(distance(data,nnpath),0)))
+Total distance with the Nearest Neighbour path is 124644.0 miles
+```
+
+We can now merge the new path with the data to be able to plot it on the world map:
+```python:
+# merge the path with the data
+df_path = pd.DataFrame({'city_id':nnpath}).merge(data, how = 'left', on=['city_id'])
+
+# plot the path on a map
+fig = px.line_mapbox(df_path, 
+                     lat="lat", 
+                     lon="lng", 
+                     hover_name="city", 
+                     hover_data=["country","prime_city"],
+                     zoom=1, 
+                     height=500)
+fig.update_layout(mapbox_style="carto-positron")
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+fig.show()
+```
+PICTURE MAP
+
+This path is significantly more efficient than any of the previous ones. However, so far we doid not address the constraint mentioned by Rudolph in this challenge. 
+
+# Path using Nearest Neighbours with the constraint
+In the challenge, it is mentioned that a penalty of 10% is applied when the 10th visited city is not a prime city location. In this section we will address this problem and see if taking this constraint into account helps reduce the path mileage.
+
+The first step is to have a look how spread the prime cities across the wold map:
+```python:
+# plot the map highliting the prime cities
+fig = px.scatter_mapbox(data, 
+                        lat="lat", 
+                        lon="lng", 
+                        hover_name="city",
+                        color="prime_city", 
+                        zoom=1, height=500)
+fig.update_layout(mapbox_style="carto-positron")
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+fig.show()
+```
+We can see that the prime cities are relatively spread across the map.
+
+Next, we will define a function that uses nearest neighbour with the added constraint called `prime_nearest_neighbour()`. This function follows the same steps as the `nearest_neighbour()` with the exception that in the loop, we add if statements:
+* In the first if statement we look at if the next step is going to be a prime city, since the penalty applies when we are leaving a prime city, we add 1 to `stop_number`. We also know that the number of prime cities is lesser than the total number of cities so we can only search for a prime city while then we still have some non-visited. Therefore, the next condition is to have a number of non-visited prime cities greater than zero. If both conditions are met, we calculate the distances from the previous stop to all the available prime cities, select the index of the closest one and store it in `nprime_index`. From here we need to find the selected prime location coordinates in the main array `xy`. This is because the indexes in `xy_primes` do not match the indexes in `xy` but `xy` indexes match the data ones. Once we have found the coordinates from the prime location in `xy` we can return the index and store it in `nearest_index` and proceed with removing the city from the various arrays before running the next loop.
+If the conditions above are not matching, this means that we do not need to leave from a prime city on the next step and therefore we can proceed as we did in the `nearest_neighbour()`.
+The second if statement is nested in the previous one when the conditions are not met. It checks if the city selected is a prime city if gets located in `xy_primes` array and deleted.
+We then add a stop to the total `stop_number` and append the final location to the path.
+
+```python:
+def prime_nearest_neighbour():
+  '''finds a path through the cities using a nearest neighbour including the carrot constraint using the prime cities.'''
+  cities = data.copy()
+  ids = cities.city_id.values[1:] 
+  xy = np.array([cities.lat.values, cities.lng.values]).T[1:] 
+  xy_primes = np.array([cities[cities.prime_city == 1].lat.values, cities[cities.prime_city == 1].lng.values]).T[:] 
+  path = [0] 
+  stop_number = 1 
+  while len(ids) > 0: 
+    last_x, last_y = cities.lat[path[-1]], cities.lng[path[-1]] 
+    if ((stop_number+1) % 10 == 0) and len(xy_primes) > 0: 
+      dist = ((xy_primes - np.array([last_x, last_y]))**2).sum(-1) 
+      nprime_index = dist.argmin() 
+      nearest_index = np.where(xy == np.array([xy_primes[nprime_index][0], xy_primes[nprime_index][1]]))[0][0] 
+      path.append(ids[nearest_index]) 
+      ids = np.delete(ids, nearest_index, axis=0)
+      xy = np.delete(xy, nearest_index, axis=0)
+      xy_primes = np.delete(xy_primes, nprime_index, axis=0) 
+    else:
+      dist = ((xy - np.array([last_x, last_y]))**2).sum(-1)
+      nearest_index = dist.argmin() 
+      path.append(ids[nearest_index]) 
+      if np.any(xy_primes == np.array([xy[nearest_index][0], xy[nearest_index][1]])):
+        nprime_index = np.where(xy_primes == np.array([xy[nearest_index][0], xy[nearest_index][1]]))[0][0] 
+        xy_primes = np.delete(xy_primes, nprime_index, axis=0) 
+      #  xy_primes = np.delete(xy_primes, nearest_index, axis=0) 
+      ids = np.delete(ids, nearest_index, axis=0) 
+      xy = np.delete(xy, nearest_index, axis=0) 
+    stop_number = stop_number+1 
+  path.append(0)
+  return path
+```
+We can now run the `distance()` function to see if adding the constraint reduced the total distance:
+
+```python:
+pnn_path = prime_nearest_neighbour()
+print('Total distance with the Carrot Constraint Nearest Neighbour with path is {} miles'.format(round(distance(data,pnn_path),0)))
+Total distance with the Carrot Constraint Nearest Neighbour with path is 158091.0 miles
+```
+
+We merge the path with the data and plot it a map:
+```python:
+# merge the path with the data
+df_path = pd.DataFrame({'city_id':pnn_path}).merge(data, how = 'left', on=['city_id'])
+
+# plot the path on a map
+fig = px.line_mapbox(df_path, 
+                     lat="lat", 
+                     lon="lng", 
+                     hover_name="city", 
+                     hover_data=["country","prime_city"],
+                     zoom=1, 
+                     height=500)
+fig.update_layout(mapbox_style="carto-positron")
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+fig.show()
+```
+PICTURE MAP
+
+We notice that the rewards from leaving from a prime city every 10th step does not outperform the penalty of not choosing the next city solely based on its distance. This may be because some prime cities are too far from some world regions and cannot effectively be added without compromising on efficiency.
+
+Thank you for taking part in this year's workshop! 
+
+Have a lovely Christmas holiday.
+
+<img src="https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/21a4e076438773.5c759e561c5e2.gif" alt="rudolph_thumbs_up" width="300"/>
 
 
 
