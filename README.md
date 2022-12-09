@@ -1,6 +1,6 @@
 # Travelling Santa challenge
 
-This challenge has been created based on 2018 Kaggle Christmas challenge and is design to be ran using Azure Storage and Databricks
+This challenge has been created based on 2018 Kaggle Christmas challenge.
 
 *Rudolph has always believed in working smarter, not harder. And what better way to earn the respect of Comet and Blitzen than showing the initiative to improve Santa's annual route for delivering toys on Christmas Eve?*
 
@@ -10,7 +10,7 @@ This challenge has been created based on 2018 Kaggle Christmas challenge and is 
 
 <img src="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c8385876438773.5c759e561c2a9.gif" alt="rudolph_compute" width="300"/>
 
-
+---
 ## Prerequisites and Imports
 The first step is to import the necessary libraries. These are commonly used ones so the experiment is reproducible.
 ```python: 
@@ -24,6 +24,7 @@ import plotly.express as px
 ## Loading the data
 The dataset has been extracted from the open source website [simplemaps](https://simplemaps.com/data/world-cities), the top three cities of each country in the world were selected when they had over 200,000 inhabitants.
 
+
 #### Data Dictionary
 * city: name of the city 	
 * lat: latitude of the city			
@@ -33,12 +34,11 @@ The dataset has been extracted from the open source website [simplemaps](https:/
 * city_id: generated unique ID
 * prime_city: cities for which the city_id is a prime number
 
-```python: 
-# calling the data from Azure Storage
-data = spark.read.csv("YOUR_PATH")
-# converting spark dataframe to python pandas dataframe
-data = data.toPandas()
+```python:
+# read the data
+data = pd.read_csv('../data/worldcities.csv')
 ```
+
 ## Basic Information
 This section will provide basic information about the data.
 
