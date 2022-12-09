@@ -146,6 +146,73 @@ PICTURE DUMB PATH MAP
 ## Path ordered by coordinates
 In this section, we are trying to improve the path by ordering the coordinates by latitudes and longitudes.
 
+first, we order the cities by coordinates starting with the latitude, excluding the first city since Santa lives in Rovaniemi to add it later at each ends of the list to start and finish at the same location. We can then run our `distance()` function to see if this method improve the mileage.
+```python:
+# order the cities by coordinates
+sorted_cities = list(data.iloc[1:,].sort_values(['lat','lng'], ascending=False)['city_id'])
+sorted_cities = [0] + sorted_cities + [0]
+
+# calculating the distance travelled for this path:
+print('Total distance with the sorted cities path is {} miles'.format(round(distance(data,sorted_cities),0)))
+Total distance with the sorted cities path is 1099608.0 miles
+```
+We then merge the new path with the data to be able to plot it on the world map:
+```python:
+# merge the path with the data
+df_path = pd.DataFrame({'city_id':sorted_cities}).merge(data, how = 'left', on=['city_id'])
+
+# plot the path on a map
+fig = px.line_mapbox(df_path, 
+                     lat="lat", 
+                     lon="lng", 
+                     hover_name="city", 
+                     hover_data=["country","prime_city"],
+                     zoom=1, 
+                     height=500)
+fig.update_layout(mapbox_style="carto-positron")
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+fig.show()
+```
+PICTURE MAP HERE
+
+The map above shows Santa going West to East. This is somewhat inefficient. So maybe we could look into ordering the cities but starting with the longitude coordinates:
+```python:
+# order the cities by coordinates
+sorted_cities = list(data.iloc[1:,].sort_values(['lng','lat',], ascending=True)['city_id'])
+sorted_cities = [0] + sorted_cities + [0]
+
+# calculating the distance travelled for this path:
+df_path = pd.DataFrame({'city_id':sorted_cities}).merge(data, how = 'left', on=['city_id'])
+Total distance with the sorted cities path is 505422.0 miles
+```
+We then merge the new path with the data to be able to plot it on the world map:
+```python:
+# merge the path with the data
+df_path = pd.DataFrame({'city_id':sorted_cities}).merge(data, how = 'left', on=['city_id'])
+
+# plot the path on a map
+fig = px.line_mapbox(df_path, 
+                     lat="lat", 
+                     lon="lng", 
+                     hover_name="city", 
+                     hover_data=["country","prime_city"],
+                     zoom=1, 
+                     height=500)
+fig.update_layout(mapbox_style="carto-positron")
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+fig.show()
+```
+PICTURE MAP HERE
+
+This map shows Santa going North to South. It is more efficient than ordering the cities by latitude but still quite inefficient so we need to find another method to create the path. 
+
+# Path using Nearest Neighbours
+We want to find the nearest city location to the previous city visited starting from Rovaniemi in Finland which is Santa's home. For that, we will be defining our own function called `nearest_neighbour()`. 
+This function finds a path visiting all the cities in Santa's list using nearest neighbour. The principle behind nearest neighbour methods is to find the point closest in distance to the new point. In this application, it starts in one city and connects with the closest unvisited one, repeating the same distance calculation until every city has been visited. It then returns to the starting city. For more information on nearest neighbour please visit [this page](https://en.wikipedia.org/wiki/Nearest_neighbour_algorithm).
+
+
+
+
 
 
 
