@@ -42,7 +42,7 @@ data = pd.read_csv('../data/worldcities.csv')
 ## Basic Information
 This section will provide basic information about the data.
 
-DATA INFO PICTURE HERE
+![data_info](https://github.com/mriffaud/Travelling-Santa-challenge/blob/main/image/data_info.PNG)
 
 The data frame is composed of 369 rows each representing a city and 7 features. The information above shows that we have no missing values which means we won't have to manipulate the data before running the model. However, the `prime_city` column is shown as an integer but we want to transform it into a binary column, so it is easier to use later on in the script.
 
@@ -60,7 +60,7 @@ fig.update_layout(mapbox_style="carto-positron")
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 fig.show()
 ```
-MAP HERE
+![map_cities](https://github.com/mriffaud/Travelling-Santa-challenge/blob/main/image/map_cities.png)
 
 We map above shows how uneven the cities are spread across the globe. We can see dense areas in Europe, Africa, and South America and some more isolated locations in Australia and New Zealand as well as Canada and the United States of America.
 
@@ -141,7 +141,7 @@ fig.update_layout(mapbox_style="carto-positron")
 fig.update_layout(margin={"t":0,"r":0,"b":0,"l":0}) # Dimensions of each margin. (To remember order, think trouble).
 fig.show()
 ```
-PICTURE DUMB PATH MAP
+![map_dumb_path](https://github.com/mriffaud/Travelling-Santa-challenge/blob/main/image/map_dumb_path.png)
 
 ## Path ordered by coordinates
 In this section, we are trying to improve the path by ordering the coordinates by latitudes and longitudes.
@@ -173,7 +173,7 @@ fig.update_layout(mapbox_style="carto-positron")
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 fig.show()
 ```
-PICTURE MAP HERE
+![map_latitudes_path](https://github.com/mriffaud/Travelling-Santa-challenge/blob/main/image/map_latitudes_path.png)
 
 The map above shows Santa going West to East. This is somewhat inefficient. So maybe we could look into ordering the cities but starting with the longitude coordinates:
 ```python:
@@ -202,7 +202,7 @@ fig.update_layout(mapbox_style="carto-positron")
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 fig.show()
 ```
-PICTURE MAP HERE
+![map_longitudes_path](https://github.com/mriffaud/Travelling-Santa-challenge/blob/main/image/map_longitudes_path.png)
 
 This map shows Santa going North to South. It is more efficient than ordering the cities by latitude but still quite inefficient so we need to find another method to create the path. 
 
@@ -259,7 +259,7 @@ fig.update_layout(mapbox_style="carto-positron")
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 fig.show()
 ```
-PICTURE MAP
+![map_nn_path](https://github.com/mriffaud/Travelling-Santa-challenge/blob/main/image/map_nn_path.png)
 
 This path is significantly more efficient than any of the previous ones. However, so far we doid not address the constraint mentioned by Rudolph in this challenge. 
 
@@ -279,6 +279,8 @@ fig.update_layout(mapbox_style="carto-positron")
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 fig.show()
 ```
+![map_prime_cities](https://github.com/mriffaud/Travelling-Santa-challenge/blob/main/image/map_prime_cities.png)
+
 We can see that the prime cities are relatively spread across the map.
 
 Next, we will define a function that uses nearest neighbour with the added constraint called `prime_nearest_neighbour()`. This function follows the same steps as the `nearest_neighbour()` with the exception that in the loop, we add if statements:
@@ -345,7 +347,7 @@ fig.update_layout(mapbox_style="carto-positron")
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 fig.show()
 ```
-PICTURE MAP
+![map_pnn_path](https://github.com/mriffaud/Travelling-Santa-challenge/blob/main/image/map_pnn_path.png)
 
 We notice that the rewards from leaving from a prime city every 10th step does not outperform the penalty of not choosing the next city solely based on its distance. This may be because some prime cities are too far from some world regions and cannot effectively be added without compromising on efficiency.
 
