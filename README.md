@@ -146,7 +146,7 @@ PICTURE DUMB PATH MAP
 ## Path ordered by coordinates
 In this section, we are trying to improve the path by ordering the coordinates by latitudes and longitudes.
 
-first, we order the cities by coordinates starting with the latitude, excluding the first city since Santa lives in Rovaniemi to add it later at each ends of the list to start and finish at the same location. We can then run our `distance()` function to see if this method improve the mileage.
+First, we order the cities by coordinates starting with the latitude, excluding the first city since Santa lives in Rovaniemi to add it later at each ends of the list to start and finish at the same location. We can then run our `distance()` function to see if this method improve the mileage.
 ```python:
 # order the cities by coordinates
 sorted_cities = list(data.iloc[1:,].sort_values(['lat','lng'], ascending=False)['city_id'])
